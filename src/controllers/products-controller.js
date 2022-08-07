@@ -1,7 +1,10 @@
 // Import Database
 const database = require("../config").promise();
 // Import Validation Schema
-const { addNewProductSchema } = require("../helpers/validation-schema");
+const {
+  addNewProductSchema,
+  updateProductSchema,
+} = require("../helpers/validation-schema");
 
 // GET ALL PRODUCTS
 module.exports.getProducts = async (req, res) => {
@@ -84,6 +87,73 @@ module.exports.addProduct = async (req, res) => {
     return res.status(201).send(`${name} has been added successfully!`);
   } catch (error) {
     console.log("ERROR :", error);
+    return res.status(500).send("Internal Service Error");
+  }
+};
+
+// DELETE PRODUCT
+module.exports.deleteProduct = async (req, res) => {
+  // Capture Product ID
+  const productId = req.params.productId;
+
+  try {
+    // Check product by its ID
+    const CHECK_PRODUCT = `
+    select * from products where id = ?
+    `;
+    const [RESULT] = await database.execute(CHECK_PRODUCT, [productId]);
+    if (!RESULT.length) {
+      return res.status(400).send("Product Not Found");
+    }
+    // Define query delete
+    const DELETE_PRODUCT = `
+    delete from products where id = ?
+    `;
+    //execute query
+    const [INFO] = await database.execute(DELETE_PRODUCT, [productId]);
+    console.log("INFO :", INFO);
+    // send respond to client
+    return res.status(200).send(`${RESULT[0].name} Has Been Deleted`);
+  } catch (error) {
+    console.log("ERROR :", error);
+    return res.status(500).send("Internal Service Error");
+  }
+};
+
+//UPDATE PRODUCT
+module.exports.updateProduct = async (req, res) => {
+  // Capture ProductId
+  const productId = req.params.productId;
+  // Capture new value
+  const body = req.body;
+
+  try {
+    // CHECK IF THE BODY IS EMPTY
+    const isEmpty = !Object.values(body).length;
+    if (isEmpty) {
+      return res.status(404).send("Please specify data you want to update");
+    }
+    // Validate Req Body
+    const { error } = updateProductSchema.validate(body);
+    if (error) {
+      return res.status(404).send(error.details[0].message);
+    }
+
+    // Define Query Update
+    let values = [];
+    for (let key in body) {
+      values.push(`${key} = '${body[key]}'`);
+    }
+
+    const UPDATE_PRODUCT = `
+    update products set ${values} where id = ?
+    `;
+    await database.execute(UPDATE_PRODUCT, [productId]);
+
+    // Send Respond
+    res.status(200).send("Product Has Been Updated");
+  } catch (error) {
+    console.log("ERROR : ", error);
     return res.status(500).send("Internal Service Error");
   }
 };
