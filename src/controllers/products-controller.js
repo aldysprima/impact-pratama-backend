@@ -139,6 +139,17 @@ module.exports.updateProduct = async (req, res) => {
       return res.status(404).send(error.details[0].message);
     }
 
+    // Check if the new product name already exist
+    if (body.name) {
+      const CHECK_PRODUCT_NAME = `
+      select * from products where name = ?
+      `;
+      const [PRODUCT] = await database.execute(CHECK_PRODUCT_NAME, [body.name]);
+      if (PRODUCT.length) {
+        return res.status(400).send("Product Name already exist");
+      }
+    }
+
     // Define Query Update
     let values = [];
     for (let key in body) {

@@ -8,8 +8,8 @@ module.exports.addNewProductSchema = joi.object({
 });
 
 module.exports.updateProductSchema = joi.object({
-  name: joi.string().required(),
-  description: joi.string().required(),
-  price: joi.number().required(),
-  uom_id: joi.number().required(),
+  name: joi.string(),
+  description: joi.string(),
+  price: joi.number(),
+  uom_id: joi.number(),
 });
